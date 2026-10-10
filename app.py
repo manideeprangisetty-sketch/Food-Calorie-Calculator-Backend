@@ -2,7 +2,10 @@ from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 import os
 
+
 app = Flask(__name__, static_folder="static")
+CORS(app, origins=["https://food-calorie-calculator-frontend.onrender.com"])
+
 
 # Approximate calories per standard serving. Values are estimates, not medical advice.
 FOODS = [
