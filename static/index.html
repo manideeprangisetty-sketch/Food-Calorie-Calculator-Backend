@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Estimate calories in everyday foods with a simple food calorie calculator.">
+  <title>Food Calorie Calculator</title>
+  <style>
+    :root { --green:#246b4b; --green2:#e7f4eb; --ink:#1e2c25; --muted:#68766e; --line:#e1e9e3; --bg:#f6f9f6; }
+    * { box-sizing:border-box; }
+    body { margin:0; font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; background:var(--bg); color:var(--ink); }
+    header { background:linear-gradient(135deg,#174d37,#2c8057); color:white; padding:36px 20px 62px; }
+    .hero { max-width:1000px; margin:auto; }
+    .eyebrow { text-transform:uppercase; letter-spacing:.13em; font-size:.75rem; font-weight:800; opacity:.82; }
+    h1 { font-size:clamp(2rem,5vw,3.3rem); margin:10px 0; line-height:1.08; }
+    header p { max-width:620px; color:#e2f3e8; line-height:1.6; margin-bottom:0; }
+    main { max-width:1000px; margin:-32px auto 50px; padding:0 18px; }
+    .layout { display:grid; grid-template-columns:1.2fr .8fr; gap:20px; align-items:start; }
+    .card { background:white; border:1px solid var(--line); border-radius:18px; padding:22px; box-shadow:0 8px 28px #153e2510; }
+    h2 { margin:0 0 8px; font-size:1.25rem; }
+    .sub { color:var(--muted); margin:0 0 20px; font-size:.92rem; line-height:1.5; }
+    label { display:block; font-weight:700; font-size:.9rem; margin:0 0 7px; }
+    select,input { width:100%; padding:12px 13px; border:1px solid #ccd9cf; border-radius:10px; background:white; font:inherit; color:var(--ink); }
+    select:focus,input:focus,button:focus { outline:3px solid #a9d7b8; outline-offset:2px; }
+    .fields { display:grid; grid-template-columns:1fr 120px; gap:12px; }
+    button { cursor:pointer; border:0; border-radius:10px; padding:12px 16px; font:inherit; font-weight:750; transition:transform .12s,opacity .12s; }
+    button:active { transform:scale(.98); }
+    .primary { background:var(--green); color:white; }
+    .secondary { background:var(--green2); color:var(--green); }
+    .add { width:100%; margin-top:14px; }
+    .items { display:flex; flex-direction:column; gap:10px; margin-top:18px; }
+    .empty { border:1px dashed #cbd9ce; border-radius:12px; padding:20px; text-align:center; color:var(--muted); font-size:.92rem; }
+    .food-row { display:flex; align-items:center; gap:12px; border:1px solid var(--line); border-radius:12px; padding:12px; }
+    .food-icon { width:42px; height:42px; border-radius:12px; background:#eff7f0; display:grid; place-items:center; font-size:1.35rem; flex-shrink:0; }
+    .food-info { flex:1; min-width:0; }
+    .food-info strong { display:block; overflow-wrap:anywhere; }
+    .food-info small { color:var(--muted); display:block; margin-top:4px; }
+    .remove { background:#fff0ed; color:#a43c2b; padding:8px 10px; }
+    .summary { background:#f0f8f2; border-radius:14px; padding:18px; margin-top:18px; }
+    .summary-label { color:var(--muted); font-size:.9rem; }
+    .total { font-size:2.7rem; line-height:1.2; font-weight:850; color:var(--green); margin:6px 0; }
+    .unit { color:var(--muted); font-size:.92rem; }
+    .result-list { margin-top:14px; display:flex; flex-direction:column; gap:9px; }
+    .result { display:flex; justify-content:space-between; gap:12px; font-size:.92rem; }
+    .result span:first-child { color:var(--muted); }
+    .message { margin-top:12px; font-size:.9rem; color:#a43c2b; min-height:1.2em; }
+    .note { color:var(--muted); font-size:.8rem; line-height:1.5; margin-top:18px; }
+    footer { text-align:center; color:var(--muted); padding:0 18px 30px; font-size:.85rem; }
+    @media(max-width:740px) { .layout { grid-template-columns:1fr; } header { padding-bottom:52px; } main { margin-top:-25px; } .card { padding:18px; } }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="hero">
+      <div class="eyebrow">Simple nutrition tool</div>
+      <h1>Food Calorie<br>Calculator</h1>
+      <p>Choose your food, enter the quantity, and get an estimated calorie total in seconds.</p>
+    </div>
+  </header>
+  <main>
+    <div class="layout">
+      <section class="card">
+        <h2>Build your plate</h2>
+        <p class="sub">Choose a food and quantity. Add as many items as you need.</p>
+        <div class="fields">
+          <div>
+            <label for="food">Food item</label>
+            <select id="food"><option>Loading foods…</option></select>
+          </div>
+          <div>
+            <label for="quantity">Quantity</label>
+            <input id="quantity" type="number" min="0.1" max="1000" step="0.1" value="1">
+          </div>
+        </div>
+        <button class="primary add" id="addBtn">+ Add food</button>
+        <div class="message" id="message" role="status" aria-live="polite"></div>
+        <div class="items" id="items"><div class="empty">Your food list is empty. Add an item to begin.</div></div>
+        <button class="secondary add" id="clearBtn" type="button">Clear all items</button>
+      </section>
+      <aside class="card">
+        <h2>Your calorie summary</h2>
+        <p class="sub">Your total updates when you calculate your selected foods.</p>
+        <div class="summary">
+          <div class="summary-label">Estimated total</div>
+          <div class="total" id="total">0</div>
+          <div class="unit">kilocalories (kcal)</div>
+        </div>
+        <div class="result-list" id="results"><div class="empty">Your calculation will appear here.</div></div>
+        <button class="primary add" id="calculateBtn">Calculate calories</button>
+        <p class="note">Calorie values are estimates for typical servings. Real values vary by ingredients, preparation, and serving size. This educational tool is not medical advice.</p>
+      </aside>
+    </div>
+  </main>
+  <footer>Food Calorie Calculator · Student project</footer>
+  <script>
+    const foodSelect = document.getElementById('food');
+    const quantityInput = document.getElementById('quantity');
+    const itemsEl = document.getElementById('items');
+    const messageEl = document.getElementById('message');
+    const totalEl = document.getElementById('total');
+    const resultsEl = document.getElementById('results');
+    let foods = [];
+    let selectedItems = [];
+    const icons = {rice:'🍚',chapati:'🫓',idli:'🍘',dosa:'🥞',upma:'🥣',dal:'🍲',egg:'🥚',banana:'🍌',apple:'🍎',milk:'🥛',curd:'🥣',paneer:'🧀',chicken:'🍗',oats:'🥣',almonds:'🥜'};
+
+    async function loadFoods() {
+      try {
+        const response = await fetch('/api/foods');
+        if (!response.ok) throw new Error('Could not load food list');
+        const data = await response.json();
+        foods = data.foods;
+        foodSelect.innerHTML = foods.map(f => `<option value="${f.id}">${f.name} — ${f.calories} kcal / ${f.serving}</option>`).join('');
+      } catch (err) {
+        foodSelect.innerHTML = '<option value="">Unable to load foods</option>';
+        messageEl.textContent = 'Could not connect to the backend. Refresh the page and try again.';
+      }
+    }
+
+    function renderItems() {
+      if (!selectedItems.length) {
+        itemsEl.innerHTML = '<div class="empty">Your food list is empty. Add an item to begin.</div>';
+        return;
+      }
+      itemsEl.innerHTML = selectedItems.map((item, index) => {
+        const food = foods.find(f => f.id === item.foodId);
+        return `<div class="food-row">
+          <div class="food-icon">${icons[item.foodId] || '🍽️'}</div>
+          <div class="food-info"><strong>${food.name}</strong><small>${item.quantity} × ${food.serving}</small></div>
+          <button class="remove" data-index="${index}" aria-label="Remove ${food.name}">Remove</button>
+        </div>`;
+      }).join('');
+      itemsEl.querySelectorAll('.remove').forEach(btn => btn.addEventListener('click', () => {
+        selectedItems.splice(Number(btn.dataset.index), 1);
+        renderItems();
+        messageEl.textContent = '';
+      }));
+    }
+
+    document.getElementById('addBtn').addEventListener('click', () => {
+      const foodId = foodSelect.value;
+      const quantity = Number(quantityInput.value);
+      if (!foodId || !Number.isFinite(quantity) || quantity <= 0 || quantity > 1000) {
+        messageEl.textContent = 'Enter a quantity greater than 0 and no more than 1000.';
+        return;
+      }
+      selectedItems.push({foodId, quantity});
+      renderItems();
+      messageEl.textContent = '';
+    });
+
+    document.getElementById('clearBtn').addEventListener('click', () => {
+      selectedItems = [];
+      renderItems();
+      totalEl.textContent = '0';
+      resultsEl.innerHTML = '<div class="empty">Your calculation will appear here.</div>';
+      messageEl.textContent = '';
+    });
+
+    document.getElementById('calculateBtn').addEventListener('click', async () => {
+      messageEl.textContent = '';
+      if (!selectedItems.length) {
+        messageEl.textContent = 'Add at least one food item first.';
+        return;
+      }
+      const button = document.getElementById('calculateBtn');
+      button.disabled = true;
+      button.textContent = 'Calculating…';
+      try {
+        const response = await fetch('/api/calculate', {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({items:selectedItems})
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Calculation failed.');
+        totalEl.textContent = data.totalCalories.toLocaleString();
+        resultsEl.innerHTML = data.items.map(item =>
+          `<div class="result"><span>${item.food} × ${item.quantity}</span><strong>${item.calories.toLocaleString()} kcal</strong></div>`
+        ).join('');
+      } catch (err) {
+        messageEl.textContent = err.message || 'Unable to calculate. Please try again.';
+      } finally {
+        button.disabled = false;
+        button.textContent = 'Calculate calories';
+      }
+    });
+    loadFoods();
+  </script>
+</body>
+</html>
